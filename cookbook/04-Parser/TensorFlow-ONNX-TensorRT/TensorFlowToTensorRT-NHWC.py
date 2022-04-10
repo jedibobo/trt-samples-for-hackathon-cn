@@ -21,6 +21,7 @@ import numpy as np
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 from datetime import datetime as dt
 from cuda import cudart
 import tensorrt as trt
@@ -44,28 +45,28 @@ cudart.cudaDeviceSynchronize()
 x = tf.compat.v1.placeholder(tf.float32, [None, 28, 28, 1], name='x')
 y_ = tf.compat.v1.placeholder(tf.float32, [None, 10], name='y_')
 
-w1 = tf.compat.v1.get_variable('w1', shape=[5, 5, 1, 32], initializer=tf.truncated_normal_initializer(mean=0, stddev=0.1))
+w1 = tf.compat.v1.get_variable('w1', shape=[5, 5, 1, 32], initializer=tf.compat.v1.truncated_normal_initializer(mean=0, stddev=0.1))
 b1 = tf.compat.v1.get_variable('b1', shape=[32], initializer=tf.constant_initializer(value=0.1))
 h1 = tf.nn.conv2d(x, w1, strides=[1, 1, 1, 1], padding='SAME')
 h2 = h1 + b1
 h3 = tf.nn.relu(h2)
 h4 = tf.nn.max_pool2d(h3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-w2 = tf.compat.v1.get_variable('w2', shape=[5, 5, 32, 64], initializer=tf.truncated_normal_initializer(mean=0, stddev=0.1))
+w2 = tf.compat.v1.get_variable('w2', shape=[5, 5, 32, 64], initializer=tf.compat.v1.truncated_normal_initializer(mean=0, stddev=0.1))
 b2 = tf.compat.v1.get_variable('b2', shape=[64], initializer=tf.constant_initializer(value=0.1))
 h5 = tf.nn.conv2d(h4, w2, strides=[1, 1, 1, 1], padding='SAME')
 h6 = h5 + b2
 h7 = tf.nn.relu(h6)
 h8 = tf.nn.max_pool2d(h7, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-w3 = tf.compat.v1.get_variable('w3', shape=[7 * 7 * 64, 1024], initializer=tf.truncated_normal_initializer(mean=0, stddev=0.1))
+w3 = tf.compat.v1.get_variable('w3', shape=[7 * 7 * 64, 1024], initializer=tf.compat.v1.truncated_normal_initializer(mean=0, stddev=0.1))
 b3 = tf.compat.v1.get_variable('b3', shape=[1024], initializer=tf.constant_initializer(value=0.1))
 h9 = tf.reshape(h8, [-1, 7 * 7 * 64])
 h10 = tf.matmul(h9, w3)
 h11 = h10 + b3
 h12 = tf.nn.relu(h11)
 
-w4 = tf.compat.v1.get_variable('w4', shape=[1024, 10], initializer=tf.truncated_normal_initializer(mean=0, stddev=0.1))
+w4 = tf.compat.v1.get_variable('w4', shape=[1024, 10], initializer=tf.compat.v1.truncated_normal_initializer(mean=0, stddev=0.1))
 b4 = tf.compat.v1.get_variable('b4', shape=[10], initializer=tf.constant_initializer(value=0.1))
 h13 = tf.matmul(h12, w4)
 h14 = h13 + b4
@@ -95,8 +96,8 @@ for i in range(1000):
 xSample, ySample = mnist.getBatch(100, False)
 print("%s, test acc = %f" % (dt.now(), acc.eval(session=sess, feed_dict={x: xSample, y_: ySample})))
 
-constantGraph = tf.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['z'])
-with tf.gfile.FastGFile(pbFile, mode='wb') as f:
+constantGraph = tf.compat.v1.graph_util.convert_variables_to_constants(sess, sess.graph_def, ['z'])
+with tf.compat.v1.gfile.FastGFile(pbFile, mode='wb') as f:
     f.write(constantGraph.SerializeToString())
 sess.close()
 print("Succeeded building model in TensorFlow!")
